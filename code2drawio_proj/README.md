@@ -41,6 +41,7 @@ token_parser--document: Document-->dom_parser["dom_parser.py"]
 dom_parser--document_dom: DocumentDOM-->drawio["drawio.py"]
 drawio--diagram: drawio_diagram-->e((end))
 ```
+
 ### token_parser.py
 **Responsibility**: Parses the token into a abstract parse tree using a context free grammar. The abstract parse tree is a binary tree, which is hard to use immediately.Therefore it undergoes another step (dom_parser) to flatten the tree such that nodes on same level are attached to the same object instance. It implements the **recursive decent parsing algorithm**.
 
