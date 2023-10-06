@@ -2,7 +2,7 @@ from multiprocessing import Value
 from typing import Optional, List
 from dataclasses import dataclass
 
-from tokenizer import Token, TokenType
+from .tokenizer import Token, TokenType
 
 @dataclass
 class TextGroup:

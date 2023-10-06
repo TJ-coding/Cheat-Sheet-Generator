@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Tuple
 import hashlib
 import copy
 
-from dom_parser import DocumentDOM, SectionDOM, SubSecDOM, TextGroupDOM
+from .dom_parser import DocumentDOM, SectionDOM, SubSecDOM, TextGroupDOM
 
 from N2G import drawio_diagram
 

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from dataclasses import dataclass
 
-from token_parser import SubSec, TextGroup, SecGroup, Section, Document
+from .token_parser import SubSec, TextGroup, SecGroup, Section, Document
 
 @dataclass
 class TextGroupDOM():

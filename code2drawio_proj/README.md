@@ -19,6 +19,7 @@ The above code is rendered as:
 ## How to Use
 To run the coed call the `render_code` method in `main.py`.
 ```python
+from code2drawio import main
 code = '''
 ==Sec 1==
 Some Text
@@ -28,7 +29,7 @@ Hello
 Bye
 ==Sec 2==
 Hi'''
-render_code(code, 'demo.drawio', '/home/sp/Pictures')
+main.render_code(code, 'demo.drawio', '/home/sp/Pictures')
 ````
 
 ## Call Sequence

@@ -1,9 +1,15 @@
 from typing import List
 
-from tokenizer import tokenize, Token
-from token_parser import Parser, Section, Document
-from dom_parser import  parse_document, DocumentDOM
-from drawio import draw_diagram
+if __name__ == '__main__':
+    from tokenizer import tokenize, Token
+    from token_parser import Parser, Section, Document
+    from dom_parser import  parse_document, DocumentDOM
+    from drawio import draw_diagram
+else:
+    from .tokenizer import tokenize, Token
+    from .token_parser import Parser, Section, Document
+    from .dom_parser import  parse_document, DocumentDOM
+    from .drawio import draw_diagram
 
 from N2G import drawio_diagram
 
