@@ -11,9 +11,11 @@ from google.auth.transport.requests import Request
 import googleapiclient.discovery
 from googleapiclient.http import MediaIoBaseDownload
 
+# === PATHS TO EDIT ========================
 CREDENTIAL_FILE_PATH: str = '~/Desktop/Desktop_Scripts/Read Ahead Lecture Sheet Generator/credentials.json'
 GOOGLEDRIVE_FOLDER_ID_TXT_PATH: str = '~/Documents/git-repo/Cheat-Sheet-Generator/cheatsheet_downloader_proj/CHEATSHEET_FOLDER_ID.txt'
 TEMP_DIR: str = '~/Desktop/Desktop_Scripts/Cheat Sheet Temp Folder'
+# ==========================================
 # Expand the tilde
 CREDENTIAL_FILE_PATH = os.path.expanduser(CREDENTIAL_FILE_PATH)
 GOOGLEDRIVE_FOLDER_ID_TXT_PATH = os.path.expanduser(GOOGLEDRIVE_FOLDER_ID_TXT_PATH)

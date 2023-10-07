@@ -5,9 +5,10 @@ import pathlib
 
 from code2drawio import main as code2drawio
 
+# === PATHS TO EDIT ========================
 TEMP_DIR: str = '~/Desktop/Desktop_Scripts/Cheat Sheet Temp Folder'
 MINDMAP_DIR='~/Documents/Mind Maps/Generated Mindmaps'
-
+# ==========================================
 TEMP_DIR = os.path.expanduser(TEMP_DIR)
 MINDMAP_DIR = os.path.expanduser(MINDMAP_DIR)
 
