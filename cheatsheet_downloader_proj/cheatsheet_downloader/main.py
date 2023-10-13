@@ -8,15 +8,17 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 import googleapiclient.discovery
 from googleapiclient.http import MediaIoBaseDownload
+from pdf2image import convert_from_path
 
 # === PATHS TO EDIT ========================
 CREDENTIAL_FILE_PATH: str = '~/Desktop/Desktop_Scripts/Read Ahead Lecture Sheet Generator/credentials.json'
 GOOGLEDRIVE_FOLDER_ID_TXT_PATH: str = '~/Documents/git-repo/Cheat-Sheet-Generator/cheatsheet_downloader_proj/CHEATSHEET_FOLDER_ID.txt'
 TEMP_DIR: str = '~/Desktop/Desktop_Scripts/Cheat Sheet Temp Folder'
 # ==========================================
-# Expand the tilde
+# Expand the tilde (~)
 CREDENTIAL_FILE_PATH = os.path.expanduser(CREDENTIAL_FILE_PATH)
 GOOGLEDRIVE_FOLDER_ID_TXT_PATH = os.path.expanduser(GOOGLEDRIVE_FOLDER_ID_TXT_PATH)
 TEMP_DIR = os.path.expanduser(TEMP_DIR)
@@ -34,7 +36,15 @@ def get_token()->Credentials:
         # Not valid
         if creds.expired and creds.refresh_token:
             # Token is expired and contains Refresh Token
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+                # Remove this try and except in production
+                # This could be because the app is not verified
+            except RefreshError as e:   
+                print (e)
+                os.remove('token.json')
+                # Try again
+                return get_token()
             with open('token.json', 'w') as token:
                 token.write(creds.to_json())
             return creds
@@ -52,7 +62,7 @@ def get_files_in_cheatsheet_folder(DRIVE: googleapiclient.discovery.Resource,
                                    folder_id)->List[Dict[str, str]]:
     '''Get files names in Google Drive 'Cheat Sheat' Folder'''
     response: Dict[str, Any] = DRIVE.files().list(
-    q=f"mimeType='image/jpeg' and parents in '{folder_id}'"
+    q=f"(mimeType='image/jpeg' or mimeType='application/pdf') and parents in '{folder_id}' and trashed=false"
                               ).execute()
     return response['files']
 
@@ -87,6 +97,7 @@ def get_file(files: List[Dict[str, str]])->Dict[str, str]:
 def download_file(DRIVE: googleapiclient.discovery.Resource, 
                   file_id: str,
                   file_name: str,
+                  file_mime_type: str,
                   file_download_dir: str)->str:
     '''Download the selected file from Google Drive.'''
     request = DRIVE.files().get_media(fileId=file_id)
@@ -96,7 +107,7 @@ def download_file(DRIVE: googleapiclient.discovery.Resource,
     while done is False:
         status, done = downloader.next_chunk()
         print(F'Download {int(status.progress() * 100)}.')
-    file_path:str = f'{file_download_dir}/{file_name}.jpeg'
+    file_path:str = f'{file_download_dir}/{file_name}'
     with open(file_path, 'wb') as handle:
         handle.write(file.getvalue())
     return file_path
@@ -105,6 +116,15 @@ def delete_file(DRIVE: googleapiclient.discovery.Resource,
                 file_id: str):
     '''Delete the downloaded file from Google Drive.'''
     DRIVE.files().delete(fileId=file_id).execute()
+
+def convert_pdf2img(file_path: str):
+    '''Converts the pdf file to images'''
+    images = convert_from_path(file_path)
+    # Remove extension
+    file_path = ''.join(file_path.split('.')[:-1])
+    for i in range(len(images)):
+        # Save pages as images in the pdf
+        images[i].save(f'{file_path} ({str(i+1)}).jpeg', 'JPEG')
 
 def open_vscode(img_file_path: str, text_file_path: str):
     '''Open the image and text file with VS Code'''
@@ -133,8 +153,13 @@ if __name__ == '__main__':
         input()
         raise ValueError('There was no files in the specified Google Drive folder.')
     file: Dict[str, str] = get_file(files)
-    img_file_path: str = download_file(DRIVE, file['id'], file['name'], file_download_dir=TEMP_DIR)
+    file_path: str = download_file(DRIVE, file['id'], file['name'], 
+                                       file['mimeType'], file_download_dir=TEMP_DIR)
+    if file['mimeType'] == 'application/pdf':
+        convert_pdf2img(file_path)
     delete_file(DRIVE, file['id'])
-    text_file_path: str = f'{TEMP_DIR}/{file["name"]}.txt'
+    # Remove extension
+    text_file_name = ''.join(file["name"].split('.')[:-1])+'.txt'
+    text_file_path: str = f'{TEMP_DIR}/{text_file_name}'
     time.sleep(1.5)
-    open_vscode(img_file_path, text_file_path)
+    open_vscode(file_path, text_file_path)

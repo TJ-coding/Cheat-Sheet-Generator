@@ -32,7 +32,7 @@ def draw_nodes(labels: List[str],
         diagram.add_node(id=label_id, label=labels[i], 
                          x_pos=int(positions[i][0]*block_width),
                          y_pos=int(positions[i][1]*block_height),
-                         style='rounded=0;')
+                         style='rounded=0;whiteSpace=wrap;html=1;')
         ids.append(label_id)
     return ids, diagram
 

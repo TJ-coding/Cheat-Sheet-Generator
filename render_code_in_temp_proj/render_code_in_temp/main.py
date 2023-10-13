@@ -9,6 +9,7 @@ from code2drawio import main as code2drawio
 TEMP_DIR: str = '~/Desktop/Desktop_Scripts/Cheat Sheet Temp Folder'
 MINDMAP_DIR='~/Documents/Mind Maps/Generated Mindmaps'
 # ==========================================
+# Expand the tilde (~)
 TEMP_DIR = os.path.expanduser(TEMP_DIR)
 MINDMAP_DIR = os.path.expanduser(MINDMAP_DIR)
 
