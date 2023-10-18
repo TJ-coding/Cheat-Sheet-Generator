@@ -66,10 +66,11 @@ if __name__ == '__main__':
     make_project_folder(project_folder_path)
     try:
         code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
-    except BaseException as e:
+    except BaseException as e:  # Print Error
         print('Error occured whilst parsing the code.')
-        print(e)
+        print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")        
         input()
-        exit()
+    code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
+
     move_temp_files_to_project_folder(file_paths, project_folder_path)
     open_drawio(f'{project_folder_path}/{code_file_name}.drawio')
