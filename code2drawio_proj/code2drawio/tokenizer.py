@@ -16,10 +16,17 @@ def parse_tokens(line: str)->Token:
     subsec_title: Optional[re.Match] = re.search("===(.*)===", line)
     if subsec_title:
         return Token(TokenType.subsec_title, subsec_title.group(1))
+    subsec_title: Optional[re.Match] = re.search("##(.*)", line)
+    if subsec_title:
+            return Token(TokenType.subsec_title, subsec_title.group(1))
     
     sec_title: Optional[re.Match] = re.search("==(.*)==", line)
     if sec_title: 
         return Token(TokenType.sec_title, sec_title.group(1))
+    sec_title: Optional[re.Match] = re.search("#(.*)", line)
+    if sec_title:
+            return Token(TokenType.sec_title, sec_title.group(1))
+    
     return Token(TokenType.text_line, line)
 
 def tokenize(code: str) -> List[Token]:
