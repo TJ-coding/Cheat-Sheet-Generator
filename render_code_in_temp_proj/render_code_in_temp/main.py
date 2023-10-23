@@ -3,6 +3,8 @@ import re
 from typing import Tuple, List, Optional
 import pathlib
 
+from insert_image import insert_images_into_drawio
+
 from code2drawio import main as code2drawio
 
 # === PATHS TO EDIT ========================
@@ -17,6 +19,15 @@ def get_files_in_temp_folder()-> List[str]:
     file_paths_in_temp_dir: List[pathlib.Path] = list(pathlib.Path(TEMP_DIR).glob('*'))
     file_str_paths_in_temp_dir: List[str] = [str(path) for path in file_paths_in_temp_dir]
     return file_str_paths_in_temp_dir
+
+def get_image_file_paths()->List[str]:
+    image_paths_in_temp_dir: List[pathlib.Path] = list(pathlib.Path(TEMP_DIR).glob('*.jpeg'))
+    image_paths_in_temp_dir+= list(pathlib.Path(TEMP_DIR).glob('*.JPEG'))
+    image_paths_in_temp_dir+= list(pathlib.Path(TEMP_DIR).glob('*.jpg'))
+    image_paths_in_temp_dir+= list(pathlib.Path(TEMP_DIR).glob('*.JPG'))
+    image_paths_in_temp_dir+= list(pathlib.Path(TEMP_DIR).glob('*.png'))
+    image_paths_in_temp_dir+= list(pathlib.Path(TEMP_DIR).glob('*.PNG'))
+    return [str(path) for path in image_paths_in_temp_dir]
 
 def get_code_file_(file_paths: List[str])-> Tuple[str, str]:
     '''Returns (code_file_path, code_file_name) of the file that contains the code.'''
@@ -70,7 +81,7 @@ if __name__ == '__main__':
         print('Error occured whilst parsing the code.')
         print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")        
         input()
-    code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
-
+    image_paths: List[str] = get_image_file_paths()
+    insert_images_into_drawio(f'{project_folder_path}/{code_file_name}.drawio', image_paths)
     move_temp_files_to_project_folder(file_paths, project_folder_path)
     open_drawio(f'{project_folder_path}/{code_file_name}.drawio')
