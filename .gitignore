@@ -3,3 +3,4 @@ cheatsheet_downloader_proj/CHEATSHEET_FOLDER_ID.txt
 code2drawio_proj/build/*
 code2drawio_proj/code2drawio.egg-info/*
 code2drawio_proj/code2drawio/__pycache__/*
+image_cropper_proj/image_cropper/__pycache__/image_cropper.cpython-310.pyc

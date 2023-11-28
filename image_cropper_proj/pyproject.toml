@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dependencies = ["opencv-python >= 4.8.1.78"]
+name = "image_cropper"
+version = "0.0.1"
+description = "A program for making multiple crops out of a picture in one go."
+readme = 'README.md'
+requires-python = '>= 3.10'
+
+#[project.urls]
+# "Homepage"= ""
+
+# [project.optional-dependencies]
+# tests = ["SQLAlchemy >= 1.4.40"]

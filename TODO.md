@@ -11,9 +11,9 @@ Project Description
 
 ### In Progress
 
-- [ ] Include Pictures in Diagrams  
 
 ### Done ✓
 
 - [x] Support # Headings  
+- [x] Include Pictures in Diagrams  
 
