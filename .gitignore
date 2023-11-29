@@ -4,3 +4,4 @@ code2drawio_proj/build/*
 code2drawio_proj/code2drawio.egg-info/*
 code2drawio_proj/code2drawio/__pycache__/*
 image_cropper_proj/image_cropper/__pycache__/image_cropper.cpython-310.pyc
+render_code_in_temp_proj/render_code_in_temp/__pycache__/insert_image.cpython-310.pyc

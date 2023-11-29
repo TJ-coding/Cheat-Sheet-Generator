@@ -75,12 +75,15 @@ if __name__ == '__main__':
         code: str = handle.read()
     project_folder_path: str = f"{MINDMAP_DIR}/{code_file_name}"
     make_project_folder(project_folder_path)
-    try:
-        code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
-    except BaseException as e:  # Print Error
-        print('Error occured whilst parsing the code.')
-        print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")        
-        input()
+    
+    code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
+    
+    # try:
+    #     code2drawio.render_code(code, f'{code_file_name}.drawio', project_folder_path)
+    # except BaseException as e:  # Print Error
+    #     print('Error occured whilst parsing the code.')
+    #     print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")        
+    #     input()
     image_paths: List[str] = get_image_file_paths()
     insert_images_into_drawio(f'{project_folder_path}/{code_file_name}.drawio', image_paths)
     move_temp_files_to_project_folder(file_paths, project_folder_path)

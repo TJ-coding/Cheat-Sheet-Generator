@@ -19,6 +19,15 @@ class DrawioIdGenerator:
         self.next_id += 1
         return f'A{self.next_id}{md5.hexdigest()}'
 
+def escape_for_xml(str_xml: str) -> str:
+    '''Escapes special chars for use in XML parsing 
+    [N2G automatically parses everything as an xml for some reason]'''
+    str_xml = str_xml.replace("&", "&amp;")
+    str_xml = str_xml.replace("<", "&lt;")
+    str_xml = str_xml.replace(">", "&gt;")
+    str_xml = str_xml.replace("\"", "&quot;")
+    str_xml = str_xml.replace("'", "&apos;")
+    return str_xml
 
 def draw_nodes(labels: List[str],
                positions: List[Tuple[float, float]],
@@ -31,7 +40,7 @@ def draw_nodes(labels: List[str],
     ids: List[str] = []
     for i in range(len(labels)):
         label_id: str = drawio_id_generator.make_id(labels[i])
-        diagram.add_node(id=label_id, label=labels[i],
+        diagram.add_node(id=label_id, label=escape_for_xml(labels[i]),
                          x_pos=int(positions[i][0]*block_width),
                          y_pos=int(positions[i][1]*block_height),
                          style='rounded=0;whiteSpace=wrap;html=1;')
