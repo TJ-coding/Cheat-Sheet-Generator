@@ -126,22 +126,29 @@ def convert_pdf2img(file_path: str):
         # Save pages as images in the pdf
         images[i].save(f'{file_path} ({str(i+1)}).jpeg', 'JPEG')
 
-def open_vscode(img_file_path: str, text_file_path: str):
+def open_vscode(text_file_path: str, img_file_path: Optional[str]=None):
     '''Open the image and text file with VS Code'''
-    with open(text_file_path, 'w') as handle:
-        handle.write("")
+    if os.path.isfile(text_file_path) == False: # Create a new file
+        with open(text_file_path, 'w') as handle:
+            handle.write("")
     print(img_file_path)
     print(text_file_path)
     os.system(f'nautilus "{TEMP_DIR}"')
     os.system(f'code "{text_file_path}" -n')
-    os.system(f'code "{img_file_path}"')
+    if img_file_path is not None:
+        os.system(f'code "{img_file_path}"')
+
 
 if __name__ == '__main__':
     if len(list(pathlib.Path(TEMP_DIR).glob('*'))) > 0:
-        print(f'Pleaes empty the temp folder: {TEMP_DIR}.')
-        os.system(f'nautilus "{TEMP_DIR}"')
-        input()
-        raise ValueError(f'Pleaes empty the temp folder: {TEMP_DIR}.')
+        override: str = input('The temp file is not empty, would you like to override? (y/n): ')
+        if override == 'y':
+            override = input('Are you sure? (y/n): ')
+        if override != 'y':
+            print(f'Please empty the temp folder: {TEMP_DIR}.')
+            os.system(f'nautilus "{TEMP_DIR}"')
+            input()
+            raise ValueError(f'Please empty the temp folder: {TEMP_DIR}.')
     
     with open(GOOGLEDRIVE_FOLDER_ID_TXT_PATH, 'r') as handle:
         google_drive_folder_id: str = handle.read()
@@ -150,7 +157,11 @@ if __name__ == '__main__':
     files: List[Dict[str, str]] = get_files_in_cheatsheet_folder(DRIVE, google_drive_folder_id)
     if len(files)==0:
         print('There was no files in the specified Google Drive folder.')
-        input()
+        start_new_cheat_sheet: str = input('Would you like to start a new cheat sheet? (y/n): ')
+        if start_new_cheat_sheet.lower() == 'y':
+            cheat_sheet_name: str = input('Enter Cheat Sheet Name: ')
+            open_vscode(f'{TEMP_DIR}/{cheat_sheet_name}.txt')
+            quit()
         raise ValueError('There was no files in the specified Google Drive folder.')
     file: Dict[str, str] = get_file(files)
     file_path: str = download_file(DRIVE, file['id'], file['name'], 
@@ -162,4 +173,4 @@ if __name__ == '__main__':
     text_file_name = ''.join(file["name"].split('.')[:-1])+'.txt'
     text_file_path: str = f'{TEMP_DIR}/{text_file_name}'
     time.sleep(1.5)
-    open_vscode(file_path, text_file_path)
+    open_vscode(text_file_path, img_file_path=file_path)
