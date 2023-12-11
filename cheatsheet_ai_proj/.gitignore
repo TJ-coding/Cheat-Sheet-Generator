@@ -1,0 +1,8 @@
+cheatsheet_ai/drawio_dataset/*
+cheatsheet_ai/test.drawio
+cheatsheet_ai/test2.drawio
+cheatsheet_ai/processed/*.pt
+*.pyc
+*.torch
+*.json
+*.pt
