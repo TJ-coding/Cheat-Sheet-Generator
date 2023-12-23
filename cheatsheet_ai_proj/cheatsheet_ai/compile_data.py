@@ -1,3 +1,6 @@
+import copy
+import itertools
+import statistics
 from models import Graph
 
 import json
@@ -199,11 +202,8 @@ def extract_edge_params(edge_elements: List[ET.Element])->Tuple[List[str], List[
 def generate_adjacency_matrix(ids: List[str], source_ids: List[str], target_ids: List[str])->List[Tuple[int, int]]:
     # Returns adjacency matrix in COO form [Coordinate Form]
     id2index: Dict[str, int] = {ids[i]: i for i in range(len(ids))}
+    
     # Ignore edges with source or target ids that is not found in list
-    print(ids)
-    print(source_ids)
-    print(target_ids)
-
     filtered = tuple(zip(*filter(lambda ids: ids[0] in id2index and ids[1] in id2index, zip(source_ids, target_ids))))
     source_ids, target_ids = filtered
     #print(len(t))
@@ -218,17 +218,46 @@ def drawio2graph(drawio_file_path: str)->Graph:
     xml: ET.ElementTree = parse_drawio_as_xml(drawio_file_path)
     shape_elements, edge_elements = extract_shape_and_edge_elements(xml)
 
-    shape_ids, shape_titles, xs, ys, widths, heights = extract_shape_params(shape_elements)
+    shape_ids, shape_titles, xs, ys, widths, heights = extract_shape_params(shape_elements)    
     edge_styles, source_ids, target_ids, edge_points = extract_edge_params(edge_elements)
+    
+    old_shape_ids = copy.deepcopy(shape_ids)
+    # Remove shapes without any titles
+    shape_ids, shape_titles, xs, ys, widths, heights = zip(*filter(lambda d: d[1]!='',  
+                                                                   zip(*[shape_ids, shape_titles, xs, ys, widths, heights])))
+               
+    print(len(old_shape_ids)-len(shape_ids))
     coo_adjacency_matrix:np.array = generate_adjacency_matrix(shape_ids, source_ids, target_ids)
-    return Graph(shape_ids, shape_titles, xs, ys, widths, heights, coo_adjacency_matrix)
+    
+    from train import compute_edge_vectors
+    import torch
+    from torch_geometric.utils import to_torch_sparse_tensor
+    # import ipdb; ipdb.set_trace()
+    # coo_adjacency_matrix = torch.LongTensor(coo_adjacency_matrix).T
+    sparse_adjacency_matrix: torch.Tensor = to_torch_sparse_tensor(torch.LongTensor(coo_adjacency_matrix).T, size=len(xs))
+    xs = torch.FloatTensor(xs)
+    ys = torch.FloatTensor(ys)
+    # print(shape_titles[((xs[coo_adjacency_matrix[0]]==xs[coo_adjacency_matrix[1]]).to(torch.long) + (ys[coo_adjacency_matrix[0]]==ys[coo_adjacency_matrix[1]].to(torch.long))).to(torch.bool).tolist().index(True)])
+    edge_vectors = compute_edge_vectors(xs, ys, sparse_adjacency_matrix)
+    # print(edge_vectors.detach()[sparse_adjacency_matrix.to(torch.bool).to_dense()].to('cpu').flatten().tolist().count(0)/ \
+    #     len(edge_vectors[sparse_adjacency_matrix.to(torch.bool).to_dense()].flatten()) )
+    # if edge_vectors.detach()[sparse_adjacency_matrix.to(torch.bool).to_dense()].to('cpu').flatten().tolist().count(0)/ \
+    #     len(edge_vectors[sparse_adjacency_matrix.to(torch.bool).to_dense()].flatten()) > 0.7:
+    #     print(drawio_file_path)
+        
+    return Graph(shape_ids, shape_titles, xs.tolist(), ys.tolist(), widths, heights, coo_adjacency_matrix)
 
 def make_dataset():
-    dataset_dir: str = 'drawio_dataset'
+    # dataset_dir: str = 'cheatsheet_ai_proj/overfit'
+    dataset_dir: str = 'cheatsheet_ai_proj/drawio_dataset'
     drawio_file_names: List[str] = os.listdir(dataset_dir)
     graphs: List[Graph] = [drawio2graph(f'{dataset_dir}/{drawio_file_names[i]}') for i in range(len(drawio_file_names))]
-    with open('graph_dataset.json', 'w') as handle:
+    with open('cheatsheet_ai_proj/graph_dataset.json', 'w') as handle:
         json.dump(graphs, handle)
+    
+    print('max width: ', max(itertools.chain(*[graph.widths for graph in graphs])))
+    print('max height: ', max(itertools.chain(*[graph.heights for graph in graphs])))
+
  
 if __name__ == '__main__':  
     make_dataset()

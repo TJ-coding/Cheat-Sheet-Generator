@@ -1,9 +1,9 @@
+import itertools
 import json
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
+from random import choice
 
-from responses import target
 from models import Graph
-import math
 
 import numpy as np
 import torch
@@ -15,20 +15,41 @@ from transformers import BertModel, BertTokenizer
 from torch.nn import Dropout, ReLU
 from torch import nn
     
-def add_noise(data: np.array, sigma: List[int])->np.array:
+def bayesian_noise(data: np.array, sigma: float)->np.array:
     noise = np.random.normal(np.zeros(len(data)), sigma)
     scale_noise = np.random.uniform(0, 1)
     noise = scale_noise*noise
     data += noise
     return data
 
-def noise_node_params(xs: List[float], ys: List[float], 
-                            widths: List[float], heights: List[float])-> Tuple[List[float], List[float], List[float], List[float]]:
+def uniform_noise(data: List[float], spread: float)->np.array:
+    noise = -spread/2 - np.random.random(size=len(data))*(spread/2)
+    data += noise
+    return data
+
+def constant(data: List[float], spread: float)->np.array:
+    noise = -spread/2 - np.random.random()*(spread/2)
+    data = np.array([noise for i in range(len(data))])
+    return data
+
+def unconditionally_random(data: List[float], spread: float)->np.array:
+    noise = -spread/2 - np.random.random(size=len(data))*(spread/2)
+    return noise
+
+def all_functions_mixed(data: List[float], spread: float)->np.array:
+    noise_function = choice([bayesian_noise, uniform_noise, constant, unconditionally_random])
+    return noise_function(data, spread)
+
+def noise_node_params(  xs: List[float], ys: List[float], 
+                        widths: List[float], heights: List[float])-> Tuple[List[float], List[float], List[float], List[float]]:
     '''Add noise to the positions and the dimensions of the nodes.'''
-    xs = add_noise(np.array(xs), 1000)
-    ys = add_noise(np.array(ys), 1000)
-    widths = add_noise(np.array(widths), 200)
-    heights = add_noise(np.array(heights), 200)
+    noise_functions: List[Callable[[List[float], float], np.array]] = [bayesian_noise, uniform_noise, constant, 
+                                                                       unconditionally_random, all_functions_mixed]
+    noise_func: Callable[[List[float], float], np.array] = choice(noise_functions)
+    xs = noise_func(np.array(xs), 1000)
+    ys = noise_func(np.array(ys), 1000)
+    widths = noise_func(np.array(widths), 200)
+    heights = noise_func(np.array(heights), 200)
     return xs.tolist(), ys.tolist(), widths.tolist(), heights.tolist()
 
 def compute_token_char_length(tokens: List[int], tokenizer: BertTokenizer) -> List[int]:
@@ -55,13 +76,16 @@ def node_params2tensors(titles: List[str], xs: List[float], ys: List[float],
      
     return torch.hstack([tokens['input_ids'], tokens['attention_mask'], xs, ys, widths, heights, token_char_lengths])
 
-def graph2data(titles: List[str], xs:FloatTensor, ys:FloatTensor, widths:FloatTensor, 
-               heights:FloatTensor, coo_adjacency_matrix: LongTensor, tokenizer)->Data:
+# NOTE: MOVE THIS CODE SOMEWHERE ELSE. IT IS NOT USED HERE MAYBE IT's USED IN EVAL
+def graph2data(titles: List[str], xs: np.array, ys: np.array, widths: np.array, 
+               heights: np.array, coo_adjacency_matrix: LongTensor, tokenizer)->Data:
     input_tensor = node_params2tensors(titles, xs, ys, widths, heights, tokenizer)
-    targets = torch.Tensor([xs, ys, widths, heights]).T
-    print(targets.shape)
+    targets = torch.stack([LongTensor(xs), LongTensor(ys), LongTensor(widths), LongTensor(heights)]).T
+    # print('Heights', heights)
+    # print('LongTensor', LongTensor(heights))
+    # print(targets.shape)
     # What does .t().contiguous() do?
-    data: Data = Data(x=input_tensor, y=targets, edge_index=LongTensor(coo_adjacency_matrix).t().contiguous())
+    data: Data = Data(x=input_tensor, edge_index=LongTensor(coo_adjacency_matrix).t().contiguous())
     return data
     
     
@@ -69,22 +93,28 @@ def graph2train_data(graph: Graph)->Data:
     # Embed each nodes into vectors
     noised_xs, noised_ys, noised_widths, noised_heights = noise_node_params(graph.xs, graph.ys, graph.widths, graph.heights)
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    return graph2data(graph.titles, noised_xs, noised_ys, noised_widths, noised_heights, graph.coo_adjacency_matrix, tokenizer)
+    input_tensor = node_params2tensors(graph.titles, noised_xs, noised_ys, noised_widths, noised_heights, tokenizer)
+    targets = torch.stack([FloatTensor(graph.xs), FloatTensor(graph.ys), FloatTensor(graph.widths), FloatTensor(graph.heights)]).T
+    return Data(x=input_tensor, y=targets ,edge_index=LongTensor(graph.coo_adjacency_matrix).t().contiguous())
     
 def prepare_data()->List[Data]:
     ''' Convert the data in the graph_dataset.json to a Data instance of the torchG
     
     '''
     # Open Data File
-    with open('graph_dataset.json', 'r') as handle:
+    with open('cheatsheet_ai_proj/graph_dataset.json', 'r') as handle:
         json_data = json.load(handle)
     # Instantiate List of Tuple as a Graph instance
-    graphs: List[Graph] = [Graph(*d) for d in json_data]
+    copies_per_data = 3
+    # copies_per_data = 30
+    graphs: List[Graph] = itertools.chain(*[[Graph(*d) for d in json_data] for _ in range(copies_per_data)])
     # Convert Graph into Data Format
     data_list: List[Data] = []
     
     for graph in graphs:
+        # print('heights', graph.heights)
         train_data: Data = graph2train_data(graph)
+        # print('train_height', train_data.y[:, 3])
         data_list.append(train_data)
     return data_list
 
@@ -116,5 +146,5 @@ class MyOwnDataset(InMemoryDataset):
         
 
 if __name__ == '__main__':       
-    d = MyOwnDataset('/home/sp/Downloads/mindmap_ai/')
+    d = MyOwnDataset('cheatsheet_ai_proj/')
     print(d)

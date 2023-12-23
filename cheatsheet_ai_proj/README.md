@@ -8,7 +8,7 @@ train--model-->eval
 * torch_geometric.data.InMemoryDataset
 
 * Can be thought of as List[Data]
-
+![model diagram](model_diagram.svg)
 ## Data
 |Param|Description|Type|Example|
 |--|--|--|--|

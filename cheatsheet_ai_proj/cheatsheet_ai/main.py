@@ -23,7 +23,7 @@ def find_new_file_path(source_file_path)->str:
     
     
 if __name__ == '__main__':
-    drawio_file_path: str = input('Please enter drawio file path: ')
+    drawio_file_path: str = input('Please enter drawio file path: ').strip()
     if drawio_file_path[0] == "'" and drawio_file_path[-1] == "'":
         drawio_file_path = drawio_file_path[1:-1]
     graph: Graph = drawio2graph(drawio_file_path)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     model = GCN()
     with torch.no_grad():
         model.eval()
-        model.load_state_dict(torch.load('model.torch'))
+        model.load_state_dict(torch.load('cheatsheet_ai_proj/cheatsheet_ai/model.torch'))
         out: FloatTensor = model(data)
         out = out.T
     new_file_path = find_new_file_path(drawio_file_path)
